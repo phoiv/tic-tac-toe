@@ -6,21 +6,21 @@ import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
 
 class Game extends React.Component {
     state = {
-        stepNumber: 0,
-        history: [{ squares: Array(9).fill(null), }],
-        historyMoves: [[],],
+        stepNumber: 0, //how deep in the game we are
+        history: [{ squares: Array(9).fill(null), move: [], onTree: null }],
         xIsNext: true,
         orderAsc: true,
-        //FIRST PLAYER HAS X
+        //FIRST PLAYER HAS X ALLWAYS
         pcFirst: true,
         //root of game tree
         // root: null,
     };
 
-    componentDidUpdate() {
+    componentDidMount() {
 
         //create Game Tree full depth
         if (!treeRoot) {
+            console.log("MAKING TREE...")
             const history = this.state.history;
             let maxing;
             let mining;
@@ -35,19 +35,23 @@ class Game extends React.Component {
 
             treeRoot = new Node(history[history.length - 1].squares, null, null, this.state.pcFirst ? true : false);
             generateTree(treeRoot, maxing, mining);
-            console.log("leafs = ", count)
+            // console.log("leafs = ", count)
             calculateHeuristicValues(treeRoot, maxing, 0, 8);
-            console.log(treeRoot)
-            // console.log(leafs)
 
-            currentOnTree = treeRoot;
+            this.setState({
+                history: [{ squares: Array(9).fill(null), move: [], onTree: treeRoot }]
+            })
         }
+    }
+
+    componentDidUpdate() {
 
         const shouldPCplay = (this.state.xIsNext && this.state.pcFirst) || (!this.state.xIsNext && !this.state.pcFirst)
         if (this.props.mode == 1 && shouldPCplay) {
             const history = this.state.history.slice(0, this.state.stepNumber + 1);
             const current = history[history.length - 1];
-            //delay pc for abit
+            console.log(current)
+            //delay pc move for abit
             setTimeout(() => { this.computerMove(current) }, 700)
 
         }
@@ -70,43 +74,28 @@ class Game extends React.Component {
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
+
         squares[i] = this.state.xIsNext ? 'X' : 'O';
-
-        const historyMovesNew = this.state.historyMoves.slice(0, this.state.stepNumber + 1);
         const currentMove = [Math.floor(i / 3) + 1, i % 3 + 1]
-
-        historyMovesNew.push(currentMove)
+        const currentOnTree = current.onTree.children.find((child) => child.myMove == i)
 
         this.setState({
-            history: history.concat([{ squares: squares, }]),
+            history: history.concat([{ squares: squares, move: currentMove, onTree: currentOnTree }]),
             xIsNext: !this.state.xIsNext,
             stepNumber: history.length,
-            historyMoves: historyMovesNew
         });
 
-        currentOnTree = currentOnTree.children.find((child) => child.myMove == i)
+
         console.log("ontree", currentOnTree)
     }
 
-    computerMove({ squares }) {
-        //old way
-        // let openSqValues = Array(9).fill(-Infinity);
-        // for (let i = 0; i < 9; i++) {
-        //     //computer allways has "O" for now
-        //     if (!squares[i]) {
+    computerMove({ squares, onTree }) {
 
-        //         let newBranch = [...squares]
-        //         newBranch[i] = "O"
-        //         openSqValues[i] = heuristicTTT(newBranch, "O", "X")
-
-        //     }
-        // }
-        // const comMove = openSqValues.indexOf(Math.max(...openSqValues))
-
-        //get all childs with value that match our nodes value and pick 1 randomly
         let possibleMoves = []
-        currentOnTree.children.forEach((child) => {
-            if (currentOnTree.value == child.value)
+        console.log(onTree)
+        //the possible moves are the children on tree that have the same heuristic value as the current node
+        onTree.children.forEach((child) => {
+            if (onTree.value == child.value)
                 possibleMoves.push(child.myMove)
         })
 
@@ -134,11 +123,11 @@ class Game extends React.Component {
         const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares);
 
-        let moves = history.map((step, move, array) => {
-            const desc = move ? `${move % 2 ? 'X' : 'O'} to ${this.state.historyMoves[move]}` : 'Go to game start';
-            return (<li key={move}><button
-                onClick={() => this.jumpTo(move)}
-                style={{ fontWeight: move === this.state.stepNumber ? "600" : "400" }}
+        let moves = history.map((_, step, array) => {
+            const desc = step ? `${step % 2 ? 'X' : 'O'} to ${this.state.history[step].move}` : 'Go to game start';
+            return (<li key={step}><button
+                onClick={() => this.jumpTo(step)}
+                style={{ fontWeight: step === this.state.stepNumber ? "600" : "400" }}
             >{desc}</button></li>);
         });
         if (!this.state.orderAsc)
@@ -258,19 +247,19 @@ class Node {
         this.parent = parent;
         this.children = [];
         this.value = null;
-        this.maxer = maxer;
+        this.maxer = maxer; //true false
     }
 }
-let currentOnTree;
-let leafs = []
+
+// let leafs = []
 let treeRoot = null;
-let count = 0;
+// let count = 0;
 function generateTree(currentNode, maxing, mining) {
 
     //check if its winning config
     if (calculateWinner(currentNode.squares)) {
-        leafs.push(currentNode)
-        count++;
+        // leafs.push(currentNode)
+        // count++;
         return;
     }
     //if current node is MAX children are MIN
@@ -294,8 +283,8 @@ function generateTree(currentNode, maxing, mining) {
 
     //counting leaf nodes
     if (currentNode.children.length == 0) {
-        leafs.push(currentNode)
-        count++
+        // leafs.push(currentNode)
+        // count++
         return;
     }
 
@@ -310,6 +299,9 @@ function calculateHeuristicValues(currentNode, maxing, currentDepth, targetDepth
 
     if (currentNode.children.length == 0) {
         currentNode.value = heuristicTTT(currentNode.squares, maxing);
+        // if (currentNode.value < 0) {
+        //     console.log(currentNode.value)
+        // }
     }
     else if (currentNode.maxer) {
         currentNode.value = Math.max(...currentNode.children.map((child) => {

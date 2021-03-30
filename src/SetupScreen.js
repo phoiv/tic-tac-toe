@@ -7,7 +7,7 @@ class SetupScreen extends React.Component {
         return (
             <div className={this.props.isActive ? "button-container on-screen" : "button-container"}>
                 <button onClick={() => this.props.handleClick(1)}>VS COM</button>
-                <button onClick={() => this.props.handleClick(2)}>2 PLAYER</button>
+                <button onClick={() => this.props.handleClick(2)}>2 PLAYERS</button>
             </div>
         )
     }

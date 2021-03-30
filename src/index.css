@@ -47,6 +47,11 @@ ol, ul {
     transform: translateX(-100%);
 }
 
+.button-container button{
+    margin: 0 10px;
+    padding: 2px 5px;
+}
+
 .button-container.on-screen{
     transform: translateX(0);
 }
@@ -66,10 +71,7 @@ ol, ul {
     transform: translateX(0); 
 }
 
-.game-board-wrapper {
-    
-    
-}
+
 
 .game-info{
     
@@ -107,8 +109,11 @@ ol, ul {
   padding: 0;
   text-align: center;
   outline: none;
-  border: none;
-  
+  border: none;  
+}
+
+.square.empty{
+    cursor: pointer;
 }
 
 
@@ -155,7 +160,6 @@ ol, ul {
 
 .game-info span{
     float:right;
-    
 
 }
 
@@ -169,6 +173,7 @@ ol, ul {
     border: none;
     margin-bottom: 5px;
     padding: 0;
+    cursor: pointer;
  
 }
 

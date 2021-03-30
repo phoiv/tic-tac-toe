@@ -7,7 +7,7 @@ class Square extends React.Component {
         return (
             <button
                 style={{ animation: this.props.animate, color: this.props.color }}
-                className="square"
+                className={this.props.value ? "square" : "square empty"}
                 onClick={() => { this.props.onClickFun() }}>
                 {this.props.value}
             </button>
